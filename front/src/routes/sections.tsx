@@ -15,7 +15,7 @@ export const DashboardPage = lazy(() => import('src/pages/dashboard'));
 export const PredictPanelPage = lazy(() => import('src/pages/predict'));
 export const Page404 = lazy(() => import('src/pages/page-not-found'));
 
-const renderFallback = () => (
+export const renderFallback = () => (
   <Box
     sx={{
       display: 'flex',

@@ -2,3 +2,16 @@
 **/__pycache__/**
 .ipynb_checkpoints
 .ipynb_checkpoints
+__pycache__
+# Jupyter Notebook checkpoints
+# Python cache directories
+# Python bytecode files
+# Python egg files
+*.pyc
+*.pyo
+*.pyd
+# Python egg-info directories
+*.egg-info
+
+# venv
+venv/

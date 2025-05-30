@@ -30,6 +30,7 @@ export type NavContentProps = {
   };
   workspaces: WorkspacesPopoverProps['data'];
   sx?: SxProps<Theme>;
+  setIsLoadingNewModel: (value: boolean) => void;
 };
 
 export function NavDesktop({
@@ -38,6 +39,7 @@ export function NavDesktop({
   slots,
   workspaces,
   layoutQuery,
+  setIsLoadingNewModel,
 }: NavContentProps & { layoutQuery: Breakpoint }) {
   const theme = useTheme();
 
@@ -61,7 +63,7 @@ export function NavDesktop({
         ...sx,
       }}
     >
-      <NavContent data={data} slots={slots} workspaces={workspaces} />
+      <NavContent data={data} slots={slots} workspaces={workspaces} setIsLoadingNewModel={setIsLoadingNewModel} />
     </Box>
   );
 }
@@ -75,6 +77,7 @@ export function NavMobile({
   slots,
   onClose,
   workspaces,
+  setIsLoadingNewModel,
 }: NavContentProps & { open: boolean; onClose: () => void }) {
   const pathname = usePathname();
 
@@ -99,14 +102,14 @@ export function NavMobile({
         },
       }}
     >
-      <NavContent data={data} slots={slots} workspaces={workspaces} />
+      <NavContent data={data} slots={slots} workspaces={workspaces} setIsLoadingNewModel={setIsLoadingNewModel} />
     </Drawer>
   );
 }
 
 // ----------------------------------------------------------------------
 
-export function NavContent({ data, slots, workspaces, sx }: NavContentProps) {
+export function NavContent({ data, slots, workspaces, sx,setIsLoadingNewModel }: NavContentProps) {
   const pathname = usePathname();
 
   return (
@@ -115,7 +118,7 @@ export function NavContent({ data, slots, workspaces, sx }: NavContentProps) {
 
       {slots?.topArea}
 
-      <WorkspacesPopover data={workspaces} sx={{ my: 2 }} />
+      <WorkspacesPopover data={workspaces} sx={{ my: 2 }} setIsLoadingNewModel={setIsLoadingNewModel} />
 
       <Scrollbar fillContent>
         <Box

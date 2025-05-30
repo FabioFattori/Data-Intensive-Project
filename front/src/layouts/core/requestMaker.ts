@@ -18,6 +18,10 @@ const routes: { [key: string]: SingleRoute } = {
     route: '/getStatistics',
     method: 'GET',
   },
+  reset:{
+    route: '/reset',
+    method: 'POST',
+  }
 };
 
 const serverBaseUrl = 'http://127.0.0.1:5000';

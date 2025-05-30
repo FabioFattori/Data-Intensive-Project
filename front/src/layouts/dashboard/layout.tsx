@@ -1,11 +1,14 @@
 import type { Breakpoint } from '@mui/material/styles';
 
+import React from 'react';
 import { merge } from 'es-toolkit';
 import { useBoolean } from 'minimal-shared/hooks';
 
 import Box from '@mui/material/Box';
 import Alert from '@mui/material/Alert';
 import { useTheme } from '@mui/material/styles';
+
+import { renderFallback } from 'src/routes/sections';
 
 import { _langs, _notifications } from 'src/_mock';
 
@@ -20,9 +23,6 @@ import { _workspaces } from '../nav-config-workspace';
 import { MenuButton } from '../components/menu-button';
 import { HeaderSection } from '../core/header-section';
 import { LayoutSection } from '../core/layout-section';
-import { AccountPopover } from '../components/account-popover';
-import { LanguagePopover } from '../components/language-popover';
-import { NotificationsPopover } from '../components/notifications-popover';
 
 import type { MainSectionProps } from '../core/main-section';
 import type { HeaderSectionProps } from '../core/header-section';
@@ -50,6 +50,7 @@ export function DashboardLayout({
   const theme = useTheme();
 
   const { value: open, onFalse: onClose, onTrue: onOpen } = useBoolean();
+  const [isLoadingNewModel, setIsLoadingNewModel] = React.useState(false);
 
   const renderHeader = () => {
     const headerSlotProps: HeaderSectionProps['slotProps'] = {
@@ -71,7 +72,7 @@ export function DashboardLayout({
             onClick={onOpen}
             sx={{ mr: 1, ml: -1, [theme.breakpoints.up(layoutQuery)]: { display: 'none' } }}
           />
-          <NavMobile data={navData} open={open} onClose={onClose} workspaces={_workspaces} />
+          <NavMobile data={navData} open={open} onClose={onClose} workspaces={_workspaces} setIsLoadingNewModel={setIsLoadingNewModel} />
         </>
       ),
     };
@@ -90,7 +91,9 @@ export function DashboardLayout({
 
   const renderFooter = () => null;
 
-  const renderMain = () => <MainSection {...slotProps?.main}>{children}</MainSection>;
+  const renderMain = () => <MainSection {...slotProps?.main}>
+    {isLoadingNewModel ? renderFallback() : children}
+  </MainSection>;
 
   return (
     <LayoutSection
@@ -102,7 +105,7 @@ export function DashboardLayout({
        * @Sidebar
        *************************************** */
       sidebarSection={
-        <NavDesktop data={navData} layoutQuery={layoutQuery} workspaces={_workspaces} />
+        <NavDesktop data={navData} layoutQuery={layoutQuery} workspaces={_workspaces} setIsLoadingNewModel={setIsLoadingNewModel} />
       }
       /** **************************************
        * @Footer

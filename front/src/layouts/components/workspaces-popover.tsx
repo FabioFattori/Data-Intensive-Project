@@ -23,9 +23,10 @@ export type WorkspacesPopoverProps = ButtonBaseProps & {
     logo: string;
     plan: string;
   }[];
+  setIsLoadingNewModel: (value: boolean) => void;
 };
 
-export function WorkspacesPopover({ data = [], sx, ...other }: WorkspacesPopoverProps) {
+export function WorkspacesPopover({ data = [], sx,setIsLoadingNewModel, ...other }: WorkspacesPopoverProps) {
   const [workspace, setWorkspace] = useState(data[0]);
 
   const [openPopover, setOpenPopover] = useState<HTMLButtonElement | null>(null);
@@ -41,10 +42,14 @@ export function WorkspacesPopover({ data = [], sx, ...other }: WorkspacesPopover
   const handleChangeWorkspace = useCallback(
     (newValue: (typeof data)[number]) => {
       setWorkspace(newValue);
+      setIsLoadingNewModel(true);
       requestMaker("changeModel",{
         model: newValue.id,
         name: newValue.name,
-      })
+      }).then((response) => {
+        setIsLoadingNewModel(false);
+        console.log(response)
+      });
       handleClosePopover();
     },
     [handleClosePopover]

@@ -8,7 +8,7 @@ from sklearn.svm import SVC
 
 
 class ModelsEnum:
-    Regression = "Regression"
+    Regression = "LinearRegression"
     RandomForest = "RandomForest"
     SVMBinary = "SVMBinary"
     SVMMulti = "SVMMulti"
@@ -96,12 +96,21 @@ def _prepare_data(WineQualities):
             train_y_multi, test_y_multi, 
             train_y_continuous, test_y_continuous)
 
+def isClassification(modelName):
+    return modelName in [ModelsEnum.SVMBinary, ModelsEnum.SVMMulti]
+
 class ServerState:
     modelName = ModelsEnum.Regression
     modelChosen = None  
     _instance = None
     WineQualities = None
     scaler = None  # Aggiungi un attributo per il scaler
+
+    def reset(self):
+        self.modelName = ModelsEnum.Regression
+        self._initializeLinearRegression()
+        
+    
     
     def __new__(cls):
         if cls._instance is None:
@@ -128,7 +137,6 @@ class ServerState:
                 self._initializeSVMMulti()
             case _:
                 raise ValueError("Modello non supportato")
-        self.modelName = newModelName
 
     def get_model(self):
         return self.modelChosen
@@ -161,7 +169,28 @@ class ServerState:
 
         # Predizione
         prediction = self.modelChosen.predict(input_scaled)
-        return prediction.tolist()
+        if isClassification(self.modelName):
+            # Se il modello è di classificazione, restituisci le probabilità
+            if self.modelName == ModelsEnum.SVMMulti:
+                """
+                Crea le etichette per classificazione a 4 classi:
+                0: Bianco Cattivo (quality < 7, color = 0)
+                1: Bianco Buono (quality >= 7, color = 0) 
+                2: Rosso Cattivo (quality < 7, color = 1)
+                3: Rosso Buono (quality >= 7, color = 1)
+                """
+                probabilities = self.modelChosen.predict_proba(input_scaled)
+                # Converti le probabilità in un dizionario con le etichette
+                class_labels = [0, 1, 2, 3]
+                prediction = {label: prob for label, prob in zip(class_labels, probabilities[0])}
+            else:
+                probabilities = self.modelChosen.predict_proba(input_scaled)
+                # Converti le probabilità in un dizionario con le etichette
+                class_labels = [0, 1]
+                prediction = {label: prob for label, prob in zip(class_labels, probabilities[0])}
+            return prediction
+        else:       
+            return prediction.tolist()
     
 
     def _initializeRandomForest(self):
@@ -174,6 +203,7 @@ class ServerState:
          train_y_multi, test_y_multi, 
          train_y_continuous, test_y_continuous) = _prepare_data(self.WineQualities)
         self.modelChosen.fit(train_X_scaled, train_y_continuous)
+        self.modelName = ModelsEnum.RandomForest
     
     def _initializeSVMBinary(self):
         # Prepare the data
@@ -182,8 +212,9 @@ class ServerState:
          train_y_multi, test_y_multi, 
          train_y_continuous, test_y_continuous) = _prepare_data(self.WineQualities)
 
-        svm_cls = SVC(kernel='rbf', random_state=42, probability=True,class_weight='balanced')
-        svm_cls.fit(train_X_scaled, train_y_binary)
+        self.modelChosen = SVC(kernel='rbf', random_state=42, probability=True,class_weight='balanced')
+        self.modelChosen.fit(train_X_scaled, train_y_binary)
+        self.modelName = ModelsEnum.SVMBinary
 
     def _initializeSVMMulti(self):
         # Prepare the data
@@ -192,8 +223,9 @@ class ServerState:
          train_y_multi, test_y_multi, 
          train_y_continuous, test_y_continuous) = _prepare_data(self.WineQualities)
 
-        svm_cls = SVC(kernel='rbf', random_state=42, probability=True,class_weight='balanced')
-        svm_cls.fit(train_X_scaled, train_y_multi)
+        self.modelChosen = SVC(kernel='rbf', random_state=42, probability=True,class_weight='balanced')
+        self.modelChosen.fit(train_X_scaled, train_y_multi)
+        self.modelName = ModelsEnum.SVMMulti
 
 
     def _initializeLinearRegression(self):
@@ -208,3 +240,4 @@ class ServerState:
         
         self.feature_names = self.WineQualities.drop(columns=['quality']).columns.tolist()
         self.modelChosen.fit(train_X_scaled, train_y_continuous)
+        self.modelName = ModelsEnum.Regression

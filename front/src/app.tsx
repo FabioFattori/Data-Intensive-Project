@@ -6,6 +6,8 @@ import { usePathname } from 'src/routes/hooks';
 
 import { ThemeProvider } from 'src/theme/theme-provider';
 
+import { requestMaker } from './layouts/core/requestMaker';
+
 
 // ----------------------------------------------------------------------
 
@@ -15,6 +17,25 @@ type AppProps = {
 
 export default function App({ children }: AppProps) {
   useScrollToTop();
+
+  const reset = async () => {
+    try {
+      await requestMaker("reset");
+      console.log("Reset successful");
+    } catch (error) {
+      console.error("Error during reset:", error);
+    }
+  };
+
+  useEffect(() => {
+    reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+
+  window.addEventListener('beforeunload', (e) => {
+    reset();
+  });
 
   return (
     <ThemeProvider>

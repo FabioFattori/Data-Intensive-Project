@@ -126,6 +126,42 @@ function PredictView() {
     );
   };
 
+  const getPercentage = (value: number | null) => {
+    if (value === null) return 'N/A';
+    return `${(value * 100).toFixed(2)}%`;
+  }
+
+  const handlePredictionResponse = (response: any) => {
+    const pred = response;
+    if (Array.isArray(pred)) {
+      if (pred.length == 1) {
+        setPrediction(`The predicted quality is: ${pred[0]}`);
+      }
+    } else if (Object.keys(pred).length == 2) {
+      // SVM Binary Classification
+      setPrediction(
+        `The Wine is: ${pred['1'] > pred['0'] ? 'Good (quality >= 7)' : 'Bad'} (${getPercentage(pred['0'])} vs ${getPercentage(pred['1'])})`
+      );
+    } else if (Object.keys(pred).length == 4) {
+      // SVM Multi Classification
+      // 0: Bianco Cattivo (quality < 7, color = 0)
+      // 1: Bianco Buono (quality >= 7, color = 0)
+      // 2: Rosso Cattivo (quality < 7, color = 1)
+      // 3: Rosso Buono (quality >= 7, color = 1)
+      setPrediction(
+        `The Wine is: ${
+          pred['0'] > pred['1'] && pred['0'] > pred['2'] && pred['0'] > pred['3']
+            ? 'White Bad (quality < 7, color = 0)'
+            : pred['1'] > pred['0'] && pred['1'] > pred['2'] && pred['1'] > pred['3']
+            ? 'White Good (quality >= 7, color = 0)'
+            : pred['2'] > pred['0'] && pred['2'] > pred['1'] && pred['2'] > pred['3']
+            ? 'Red Bad (quality < 7, color = 1)'
+            : 'Red Good (quality >= 7, color = 1)'
+        } (${getPercentage(pred['0'])} vs ${getPercentage(pred['1'])} vs ${getPercentage(pred['2'])} vs ${getPercentage(pred['3'])})`
+      );
+    }
+  };
+
   return (
     <DashboardContent maxWidth="xl">
       <Typography variant="h4" sx={{ mb: { xs: 3, md: 5 } }}>
@@ -290,8 +326,7 @@ function PredictView() {
                 id="demo-simple-select"
                 value={color}
                 label="Age"
-                onChange={(e) =>
-                  setColor(e.target.value as 1 | 0)}
+                onChange={(e) => setColor(e.target.value as 1 | 0)}
               >
                 <MenuItem value={0}>White</MenuItem>
                 <MenuItem value={1}>Red</MenuItem>
@@ -338,7 +373,7 @@ function PredictView() {
                   color: color,
                 })
                   .then((response) => {
-                    setPrediction(response.prediction);
+                    handlePredictionResponse(response.prediction);
                     console.log('Prediction:', response.prediction);
                   })
                   .catch((error) => {
@@ -376,6 +411,18 @@ function PredictView() {
           </Grid>
         </Grid>
       </Card>
+
+      {prediction && (
+        <Card sx={{ xs: 12, md: 6, lg: 4, mt: 3 }}>
+          <CardHeader
+            title="Prediction Result"
+            subheader="The result of the prediction will be here"
+          />
+          <Box sx={{ p: 3 }}>
+            <Typography variant="h5">{prediction}</Typography>
+          </Box>
+        </Card>
+      )}
 
       <Dialog
         open={open}

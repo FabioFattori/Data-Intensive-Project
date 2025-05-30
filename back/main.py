@@ -5,8 +5,6 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask import make_response
 import serverState as ss
-from PIL import Image
-import base64
 
 # Ottieni il percorso assoluto della cartella principale (AmbrogioAI)
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -56,6 +54,10 @@ def predict():
 
     return jsonify({"prediction": prediction})
 
+@app.route('/reset', methods=['POST'])
+def reset():
+    ss.ServerState().reset()
+    return jsonify({"message": "Server state reset"}), 200
 
 if __name__ == "__main__":
     # start the server in debug

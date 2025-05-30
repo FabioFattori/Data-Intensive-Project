@@ -5,6 +5,11 @@ REM Salva questo file come run_script.bat
 
 cls
 
+call dependencies.bat
+set VENV_DIR=venv
+
+call %VENV_DIR%\Scripts\activate
+
 echo Esecuzione dello script Python...
 echo.
 
