@@ -26,6 +26,7 @@ def getTypes():
 @app.route('/changeModel', methods=['POST'])
 def choseAi():
     data = request.get_json()
+    print(f"Received data: {data}")
     modelName = ss.ModelsEnum.Null
     match data["model"]:
         case ss.ModelsEnum.Regression:
@@ -37,17 +38,15 @@ def choseAi():
         case ss.ModelsEnum.SVMMulti:
             modelName = ss.ModelsEnum.SVMMulti
         case _:
-            return jsonify({
-                "the fuck is this my nigga??? " : data['model']
-            })
+            print("Nessun modello selezionato", data["model"])
 
     ss.ServerState().set_model(modelName)
-    return jsonify()
+    return jsonify({"message": f"Modello cambiato in {modelName}"}), 200
 
 @app.route('/predict', methods=['POST'])
 def predict():
     data = request.get_json()
-    print("GETTED DATA FROM FRONT => ",data)
+    
     model = ss.ServerState().get_model() 
     if model is None:
         return jsonify({"error": "Nessun modello selezionato"}), 400

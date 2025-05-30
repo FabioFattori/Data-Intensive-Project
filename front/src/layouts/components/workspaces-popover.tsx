@@ -12,6 +12,8 @@ import MenuItem, { menuItemClasses } from '@mui/material/MenuItem';
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 
+import { requestMaker } from '../core/requestMaker';
+
 // ----------------------------------------------------------------------
 
 export type WorkspacesPopoverProps = ButtonBaseProps & {
@@ -39,6 +41,10 @@ export function WorkspacesPopover({ data = [], sx, ...other }: WorkspacesPopover
   const handleChangeWorkspace = useCallback(
     (newValue: (typeof data)[number]) => {
       setWorkspace(newValue);
+      requestMaker("changeModel",{
+        model: newValue.id,
+        name: newValue.name,
+      })
       handleClosePopover();
     },
     [handleClosePopover]

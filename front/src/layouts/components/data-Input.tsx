@@ -13,40 +13,47 @@ interface DataInputProps {
 }
 
 function DataInput(props: DataInputProps) {
+  const labelToShow = props.value != null || props.value != undefined ? '' : props.name;
+  const valueToShow =
+    props.value === -100 ||
+    Number.isNaN(props.value) ||
+    props.value === null ||
+    props.value === undefined
+      ? ''
+      : props.value;
+
   return props.adornment ? (
     <TextField
       fullWidth
       id="outlined-suffix-shrink"
-      label={props.name}
+      label={labelToShow}
       variant="outlined"
-      value={props.value}
+      value={valueToShow}
       onChange={props.onChange}
-      slotProps={{
-        input: {
-          endAdornment: (
-            <InputAdornment
-              position="end"
-              sx={{
-                opacity: 0,
-                pointerEvents: 'none',
-                [`[data-shrink=true] ~ .${inputBaseClasses.root} > &`]: {
-                  opacity: 1,
-                },
-              }}
-            >
-              {props.adornment}
-            </InputAdornment>
-          ),
-        },
+      InputProps={{
+        endAdornment: (
+          <InputAdornment
+            position="end"
+            sx={{
+              opacity: 0,
+              pointerEvents: 'none',
+              [`[data-shrink=true] ~ .${inputBaseClasses.root} > &`]: {
+                opacity: 1,
+              },
+            }}
+          >
+            {props.adornment}
+          </InputAdornment>
+        ),
       }}
     />
   ) : props.maxValue || props.minValue ? (
     <TextField
       fullWidth
       id="outlined-suffix-shrink"
-      label={props.name}
+      label={labelToShow}
       variant="outlined"
-      value={props.value}
+      value={valueToShow}
       onChange={props.onChange}
       inputProps={{
         max: props.maxValue,
@@ -58,9 +65,9 @@ function DataInput(props: DataInputProps) {
     <TextField
       fullWidth
       id="outlined-suffix-shrink"
-      label={props.name}
+      label={labelToShow}
       variant="outlined"
-      value={props.value}
+      value={valueToShow}
       onChange={props.onChange}
     />
   );

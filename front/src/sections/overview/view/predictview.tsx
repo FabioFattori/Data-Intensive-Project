@@ -1,7 +1,9 @@
 import React from 'react';
 
+import InfoIcon from '@mui/icons-material/Info';
 import { TransitionProps } from '@mui/material/transitions';
 import {
+  Box,
   Button,
   Card,
   CardHeader,
@@ -10,12 +12,16 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  FormControl,
   Grid,
   IconButton,
+  InputLabel,
+  MenuItem,
+  Popover,
+  Select,
   Slide,
   Typography,
 } from '@mui/material';
-import InfoIcon from '@mui/icons-material/Info';
 
 import { DashboardContent } from 'src/layouts/dashboard';
 import DataInput from 'src/layouts/components/data-Input';
@@ -42,6 +48,7 @@ function PredictView() {
   const [pH, setPH] = React.useState(null as number | null);
   const [sulphates, setSulphates] = React.useState(null as number | null);
   const [alcohol, setAlcohol] = React.useState(null as number | null);
+  const [color, setColor] = React.useState(1 as 1 | 0);
   const [prediction, setPrediction] = React.useState('');
 
   const units = [
@@ -53,13 +60,36 @@ function PredictView() {
   const inputsSizes = { xs: 12, md: 6, lg: 3 };
 
   const [open, setOpen] = React.useState(false);
+  const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null);
 
-  const handleClickOpen = () => {
-    setOpen(true);
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
   };
+
+  const handleClosePopOver = () => {
+    setAnchorEl(null);
+  };
+
+  const openPopover = Boolean(anchorEl);
+  const id = open ? 'simple-popover' : undefined;
 
   const handleClose = () => {
     setOpen(false);
+  };
+
+  const useDefaultValues = () => {
+    setFixedAcidity(7.4);
+    setVolatileAcidity(0.7);
+    setCitricAcid(0.0);
+    setResidualSugar(1.9);
+    setChlorides(0.076);
+    setFreeSulfurDioxide(11.0);
+    setTotalSulfurDioxide(34.0);
+    setDensity(0.9978);
+    setPH(3.51);
+    setSulphates(0.56);
+    setAlcohol(9.4);
+    setColor(1);
   };
 
   const getWhichVariablesAreNull = () => {
@@ -100,10 +130,42 @@ function PredictView() {
     <DashboardContent maxWidth="xl">
       <Typography variant="h4" sx={{ mb: { xs: 3, md: 5 } }}>
         Predict Panel 🔮{' '}
-        <IconButton aria-label="info">
+        <IconButton aria-label="info" onClick={handleClick}>
           <InfoIcon />
         </IconButton>
       </Typography>
+      <Popover
+        open={openPopover}
+        anchorEl={anchorEl}
+        onClose={handleClosePopOver}
+        anchorOrigin={{
+          vertical: 'center',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'center',
+          horizontal: 'left',
+        }}
+      >
+        <Typography sx={{ p: 1 }}>Example Values:</Typography>
+        <Box sx={{ p: 2 }}>
+          <Typography>Fixed Acidity: 7.4</Typography>
+          <Typography>Volatile Acidity: 0.70</Typography>
+          <Typography>Citric Acid: 0.00</Typography>
+          <Typography>Residual Sugar: 1.9</Typography>
+          <Typography>Chlorides: 0.076</Typography>
+          <Typography>Free Sulfur Dioxide: 11.0</Typography>
+          <Typography>Total Sulfur Dioxide: 34.0</Typography>
+          <Typography>Density: 0.9978</Typography>
+          <Typography>pH: 3.51</Typography>
+          <Typography>Sulphates: 0.56</Typography>
+          <Typography>Alcohol: 9.4</Typography>
+          <Typography>Color: Red</Typography>
+          <Button variant="outlined" fullWidth onClick={useDefaultValues} sx={{ mt: 2 }}>
+            Use Example Values
+          </Button>
+        </Box>
+      </Popover>
 
       <Card sx={{ xs: 12, md: 6, lg: 4 }}>
         <CardHeader
@@ -220,9 +282,25 @@ function PredictView() {
               }
             />
           </Grid>
+          <Grid size={inputsSizes}>
+            <FormControl fullWidth>
+              <InputLabel id="demo-simple-select-label">Color</InputLabel>
+              <Select
+                labelId="demo-simple-select-label"
+                id="demo-simple-select"
+                value={color}
+                label="Age"
+                onChange={(e) =>
+                  setColor(e.target.value as 1 | 0)}
+              >
+                <MenuItem value={0}>White</MenuItem>
+                <MenuItem value={1}>Red</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
         </Grid>
-        <Grid container padding={3}>
-          <Grid size={12}>
+        <Grid container spacing={6} padding={3}>
+          <Grid size={8}>
             <Button
               variant="contained"
               size="large"
@@ -257,6 +335,7 @@ function PredictView() {
                   pH: pH,
                   sulphates: sulphates,
                   alcohol: alcohol,
+                  color: color,
                 })
                   .then((response) => {
                     setPrediction(response.prediction);
@@ -269,6 +348,30 @@ function PredictView() {
               }}
             >
               Predict!
+            </Button>
+          </Grid>
+          <Grid size={4}>
+            <Button
+              style={{ height: '100%' }}
+              variant="outlined"
+              fullWidth
+              onClick={() => {
+                setFixedAcidity(null);
+                setVolatileAcidity(null);
+                setCitricAcid(null);
+                setResidualSugar(null);
+                setChlorides(null);
+                setFreeSulfurDioxide(null);
+                setTotalSulfurDioxide(null);
+                setDensity(null);
+                setPH(null);
+                setSulphates(null);
+                setAlcohol(null);
+                setColor(1);
+                setPrediction('');
+              }}
+            >
+              Reset Variables
             </Button>
           </Grid>
         </Grid>

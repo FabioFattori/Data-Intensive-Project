@@ -30,7 +30,20 @@ def getDataSetAndPrepareIt():
     WineQualities = pd.read_csv(csv_file)
     WineQualities.rename(columns={"type" : "color"}, inplace=True)
     WineQualities["color"] = WineQualities["color"].map({"red": 1, "white": 0})
-    return WineQualities.astype({"color": "int8"})
+    WineQualities = WineQualities.astype({"color": "int8"})
+    for col in WineQualities.columns:
+        if WineQualities[col].isnull().any():
+            # Ottiengo le righe con valori NaN per il colonna corrente
+            nan_row = WineQualities[WineQualities[col].isnull()]
+            for index, row in nan_row.iterrows():
+                rowToMean = WineQualities[WineQualities['color'] == row['color']]
+                rowToMean = rowToMean[rowToMean['quality'] == row['quality']]
+                if not rowToMean.empty:
+                    mean_value = rowToMean[col].mean()
+                    WineQualities.at[index, col] = mean_value
+                else:
+                    exit(f"Nessun valore trovato per la colonna {col} con qualità {row['quality']} e colore {row['color']}")
+    return WineQualities
 
 def create_multiclass_class_names(data):
     """
@@ -88,8 +101,7 @@ class ServerState:
     modelChosen = None  
     _instance = None
     WineQualities = None
-
-
+    scaler = None  # Aggiungi un attributo per il scaler
     
     def __new__(cls):
         if cls._instance is None:
@@ -97,6 +109,8 @@ class ServerState:
             # import the dataset only once
             cls._instance.WineQualities = getDataSetAndPrepareIt()
             cls._instance._initializeLinearRegression()
+            scaler = StandardScaler()
+            cls._instance.scaler = scaler.fit(cls._instance.WineQualities.drop(columns=['quality']))
         return cls._instance
         
     def set_model(self, newModelName):
@@ -119,10 +133,35 @@ class ServerState:
     def get_model(self):
         return self.modelChosen
     
-    def handlePrediction(self,data):
+    def handlePrediction(self, data):
         if self.modelName is ModelsEnum.Null:
             raise ValueError("Nessun modello selezionato")
-        return self.modelChosen.predict(data)
+
+        import pandas as pd
+
+        rename_map = {
+            'fixed_acidity': 'fixed acidity',
+            'volatile_acidity': 'volatile acidity',
+            'citric_acid': 'citric acid',
+            'residual_sugar': 'residual sugar',
+            'chlorides': 'chlorides',
+            'free_sulfur_dioxide': 'free sulfur dioxide',
+            'total_sulfur_dioxide': 'total sulfur dioxide',
+            'density': 'density',
+            'pH': 'pH',
+            'sulphates': 'sulphates',
+            'alcohol': 'alcohol',
+            'color': 'color'
+        }
+
+        converted = {rename_map[k]: v for k, v in data.items() if k in rename_map}
+        ordered_data = {name: converted.get(name, 0) for name in self.feature_names}
+        df = pd.DataFrame([ordered_data])
+        input_scaled = self.scaler.transform(df)
+
+        # Predizione
+        prediction = self.modelChosen.predict(input_scaled)
+        return prediction.tolist()
     
 
     def _initializeRandomForest(self):
@@ -134,7 +173,6 @@ class ServerState:
          train_y_binary, test_y_binary, 
          train_y_multi, test_y_multi, 
          train_y_continuous, test_y_continuous) = _prepare_data(self.WineQualities)
-        
         self.modelChosen.fit(train_X_scaled, train_y_continuous)
     
     def _initializeSVMBinary(self):
@@ -168,4 +206,5 @@ class ServerState:
          train_y_multi, test_y_multi, 
          train_y_continuous, test_y_continuous) = _prepare_data(self.WineQualities)
         
+        self.feature_names = self.WineQualities.drop(columns=['quality']).columns.tolist()
         self.modelChosen.fit(train_X_scaled, train_y_continuous)
