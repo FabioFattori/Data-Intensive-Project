@@ -105,18 +105,45 @@ class ServerState:
     _instance = None
     WineQualities = None
     scaler = None  # Aggiungi un attributo per il scaler
+    genericStatistics = None
+    specificStatistics = None
+    history = []
 
     def reset(self):
         self.modelName = ModelsEnum.Regression
         self._initializeLinearRegression()
-        
     
-    
+    def _genericStatistics(self):
+        if self.genericStatistics is None:
+            self.genericStatistics = {
+                0: {
+                    "name": "Distribuzione della qualità del vino",
+                    "good": self.WineQualities[self.WineQualities['quality'] >= 7].shape[0],
+                    "bad":  self.WineQualities[self.WineQualities['quality'] < 7].shape[0],
+                },
+                1: {
+                    "name": "Distribuzione del colore del vino",
+                    "red": self.WineQualities[self.WineQualities['color'] == 1].shape[0],
+                    "white": self.WineQualities[self.WineQualities['color'] == 0].shape[0],
+                },
+                2: {
+                    "name" : "Distribuzione dei vini buoni rossi e bianchi",
+                    "red": self.WineQualities[(self.WineQualities['color'] == 1) & (self.WineQualities['quality'] >= 7)].shape[0],
+                    "white": self.WineQualities[(self.WineQualities['color'] == 0) & (self.WineQualities['quality'] >= 7)].shape[0],
+                },
+                3: {
+                    "name" : "Distribuzione dei vini cattivi rossi e bianchi",
+                    "red": self.WineQualities[(self.WineQualities['color'] == 1) & (self.WineQualities['quality'] < 7)].shape[0],
+                    "white": self.WineQualities[(self.WineQualities['color'] == 0) & (self.WineQualities['quality'] < 7)].shape[0],
+                }
+            }
+     
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(ServerState, cls).__new__(cls)
             # import the dataset only once
             cls._instance.WineQualities = getDataSetAndPrepareIt()
+            cls._instance._genericStatistics()
             cls._instance._initializeLinearRegression()
             scaler = StandardScaler()
             cls._instance.scaler = scaler.fit(cls._instance.WineQualities.drop(columns=['quality']))
@@ -172,13 +199,6 @@ class ServerState:
         if isClassification(self.modelName):
             # Se il modello è di classificazione, restituisci le probabilità
             if self.modelName == ModelsEnum.SVMMulti:
-                """
-                Crea le etichette per classificazione a 4 classi:
-                0: Bianco Cattivo (quality < 7, color = 0)
-                1: Bianco Buono (quality >= 7, color = 0) 
-                2: Rosso Cattivo (quality < 7, color = 1)
-                3: Rosso Buono (quality >= 7, color = 1)
-                """
                 probabilities = self.modelChosen.predict_proba(input_scaled)
                 # Converti le probabilità in un dizionario con le etichette
                 class_labels = [0, 1, 2, 3]
@@ -188,8 +208,18 @@ class ServerState:
                 # Converti le probabilità in un dizionario con le etichette
                 class_labels = [0, 1]
                 prediction = {label: prob for label, prob in zip(class_labels, probabilities[0])}
+            self.history.append({
+                "model": self.modelName,
+                "date": pd.Timestamp.now().isoformat(),
+                "prediction": prediction
+            })
             return prediction
         else:       
+            self.history.append({
+                "model": self.modelName,
+                "date": pd.Timestamp.now().isoformat(),
+                "prediction": prediction.tolist()
+            })
             return prediction.tolist()
     
 
@@ -204,6 +234,12 @@ class ServerState:
          train_y_continuous, test_y_continuous) = _prepare_data(self.WineQualities)
         self.modelChosen.fit(train_X_scaled, train_y_continuous)
         self.modelName = ModelsEnum.RandomForest
+        self.specificStatistics = {
+            "feature_importances": dict(zip(self.WineQualities.drop(columns=['quality']).columns, self.modelChosen.feature_importances_)),
+            "r2_score": self.modelChosen.score(test_X_scaled, test_y_continuous),
+            "mean_squared_error": np.mean((self.modelChosen.predict(test_X_scaled) - test_y_continuous) ** 2),
+            "mean_absolute_error": np.mean(np.abs(self.modelChosen.predict(test_X_scaled) - test_y_continuous)),
+        }
     
     def _initializeSVMBinary(self):
         # Prepare the data
@@ -215,6 +251,11 @@ class ServerState:
         self.modelChosen = SVC(kernel='rbf', random_state=42, probability=True,class_weight='balanced')
         self.modelChosen.fit(train_X_scaled, train_y_binary)
         self.modelName = ModelsEnum.SVMBinary
+        self.specificStatistics = {
+            "r2_score": self.modelChosen.score(test_X_scaled, test_y_binary),
+            "mean_squared_error": np.mean((self.modelChosen.predict(test_X_scaled) - test_y_binary) ** 2),
+            "mean_absolute_error": np.mean(np.abs(self.modelChosen.predict(test_X_scaled) - test_y_binary)),
+        }
 
     def _initializeSVMMulti(self):
         # Prepare the data
@@ -226,6 +267,11 @@ class ServerState:
         self.modelChosen = SVC(kernel='rbf', random_state=42, probability=True,class_weight='balanced')
         self.modelChosen.fit(train_X_scaled, train_y_multi)
         self.modelName = ModelsEnum.SVMMulti
+        self.specificStatistics = {
+            "r2_score": self.modelChosen.score(test_X_scaled, test_y_multi),
+            "mean_squared_error": np.mean((self.modelChosen.predict(test_X_scaled) - test_y_multi) ** 2),
+            "mean_absolute_error": np.mean(np.abs(self.modelChosen.predict(test_X_scaled) - test_y_multi)),
+        }
 
 
     def _initializeLinearRegression(self):
@@ -241,3 +287,9 @@ class ServerState:
         self.feature_names = self.WineQualities.drop(columns=['quality']).columns.tolist()
         self.modelChosen.fit(train_X_scaled, train_y_continuous)
         self.modelName = ModelsEnum.Regression
+        self.specificStatistics = {
+            "coefficients": dict(zip(self.feature_names, self.modelChosen.coef_)),
+            "r2_score": self.modelChosen.score(test_X_scaled, test_y_continuous),
+            "mean_squared_error": np.mean((self.modelChosen.predict(test_X_scaled) - test_y_continuous) ** 2),
+            "mean_absolute_error": np.mean(np.abs(self.modelChosen.predict(test_X_scaled) - test_y_continuous)),
+        }

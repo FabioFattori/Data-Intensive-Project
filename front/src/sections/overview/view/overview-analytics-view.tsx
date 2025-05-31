@@ -1,155 +1,125 @@
+import { useEffect, useState } from 'react';
+
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 
-import { DashboardContent } from 'src/layouts/dashboard';
-import { _posts, _tasks, _traffic, _timeline } from 'src/_mock';
+import { renderFallback } from 'src/routes/sections';
 
-import { AnalyticsNews } from '../analytics-news';
-import { AnalyticsTasks } from '../analytics-tasks';
-import { AnalyticsCurrentVisits } from '../analytics-current-visits';
+import { DashboardContent } from 'src/layouts/dashboard';
+import { requestMaker } from 'src/layouts/core/requestMaker';
+
+import GenericStatsComponent from './genericStatsComponent';
 import { AnalyticsOrderTimeline } from '../analytics-order-timeline';
-import { AnalyticsWebsiteVisits } from '../analytics-website-visits';
 import { AnalyticsWidgetSummary } from '../analytics-widget-summary';
-import { AnalyticsTrafficBySite } from '../analytics-traffic-by-site';
-import { AnalyticsCurrentSubject } from '../analytics-current-subject';
-import { AnalyticsConversionRates } from '../analytics-conversion-rates';
+
+import f1 from '../../../../public/assets/icons/glass/chart-bar-svgrepo-com.svg';
+import f2 from '../../../../public/assets/icons/glass/chart-pie-svgrepo-com.svg';
+import f3 from '../../../../public/assets/icons/glass/chart-waterfall-svgrepo-com.svg';
 
 // ----------------------------------------------------------------------
 
 export function OverviewAnalyticsView() {
-  return (
+  const [genericStats, setGenericStats] = useState(null);
+  const [specificStats, setSpecificStats] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    requestMaker('getStatistics')
+      .then((response) => {
+        console.log(response);
+        setGenericStats(response.generic);
+        setSpecificStats(response.specific);
+        setHistory(response.history);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error('Error fetching statistics:', error);
+        setLoading(false);
+      });
+  }, []);
+
+  const WeeklySalesIcon = () => (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      style={{ color: 'orange', fill: 'orange' }}
+    >
+      <path
+        d="M21 21H7.8C6.11984 21 5.27976 21 4.63803 20.673C4.07354 20.3854 3.6146 19.9265 3.32698 19.362C3 18.7202 3 17.8802 3 16.2V3M15 4V8M11 8V12M7 13V17M19 4V17"
+        stroke="orange"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+
+  
+
+
+  return loading ? (
+    renderFallback()
+  ) : (
     <DashboardContent maxWidth="xl">
       <Typography variant="h4" sx={{ mb: { xs: 3, md: 5 } }}>
-        Hi, Welcome back 👋
+        Generic Statistics of the Dataset 📊
       </Typography>
 
-      <Grid container spacing={3}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <AnalyticsWidgetSummary
-            title="Weekly sales"
-            percent={2.6}
-            total={714000}
-            icon={<img alt="Weekly sales" src="/assets/icons/glass/ic-glass-bag.svg" />}
-            chart={{
-              categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
-              series: [22, 8, 35, 50, 82, 84, 77, 12],
-            }}
-          />
-        </Grid>
+      {genericStats && <GenericStatsComponent genericStats={genericStats} />}
 
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <AnalyticsWidgetSummary
-            title="New users"
-            percent={-0.1}
-            total={1352831}
-            color="secondary"
-            icon={<img alt="New users" src="/assets/icons/glass/ic-glass-users.svg" />}
-            chart={{
-              categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
-              series: [56, 47, 40, 62, 73, 30, 23, 54],
-            }}
-          />
-        </Grid>
+      <Grid container spacing={3} sx={{ mt: 3 }}>
+        {history && history.length > 0 && (
+          <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+            <AnalyticsOrderTimeline title="Prediction timeline" list={history} />
+          </Grid>
+        )}
+        {specificStats &&
+          Object.keys(specificStats).map((stat: string, index: number) => {
+            // Estrai le chiavi da visualizzare escludendo 'name'
+            console.log(stat);
 
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <AnalyticsWidgetSummary
-            title="Purchase orders"
-            percent={2.8}
-            total={1723315}
-            color="warning"
-            icon={<img alt="Purchase orders" src="/assets/icons/glass/ic-glass-buy.svg" />}
-            chart={{
-              categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
-              series: [40, 70, 50, 28, 70, 75, 7, 64],
-            }}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <AnalyticsWidgetSummary
-            title="Messages"
-            percent={3.6}
-            total={234}
-            color="error"
-            icon={<img alt="Messages" src="/assets/icons/glass/ic-glass-message.svg" />}
-            chart={{
-              categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
-              series: [56, 30, 23, 54, 47, 40, 62, 73],
-            }}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-          <AnalyticsCurrentVisits
-            title="Current visits"
-            chart={{
-              series: [
-                { label: 'America', value: 3500 },
-                { label: 'Asia', value: 2500 },
-                { label: 'Europe', value: 1500 },
-                { label: 'Africa', value: 500 },
-              ],
-            }}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, md: 6, lg: 8 }}>
-          <AnalyticsWebsiteVisits
-            title="Website visits"
-            subheader="(+43%) than last year"
-            chart={{
-              categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'],
-              series: [
-                { name: 'Team A', data: [43, 33, 22, 37, 67, 68, 37, 24, 55] },
-                { name: 'Team B', data: [51, 70, 47, 67, 40, 37, 24, 70, 24] },
-              ],
-            }}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, md: 6, lg: 8 }}>
-          <AnalyticsConversionRates
-            title="Conversion rates"
-            subheader="(+43%) than last year"
-            chart={{
-              categories: ['Italy', 'Japan', 'China', 'Canada', 'France'],
-              series: [
-                { name: '2022', data: [44, 55, 41, 64, 22] },
-                { name: '2023', data: [53, 32, 33, 52, 13] },
-              ],
-            }}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-          <AnalyticsCurrentSubject
-            title="Current subject"
-            chart={{
-              categories: ['English', 'History', 'Physics', 'Geography', 'Chinese', 'Math'],
-              series: [
-                { name: 'Series 1', data: [80, 50, 30, 40, 100, 20] },
-                { name: 'Series 2', data: [20, 30, 40, 80, 20, 80] },
-                { name: 'Series 3', data: [44, 76, 78, 13, 43, 10] },
-              ],
-            }}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, md: 6, lg: 8 }}>
-          <AnalyticsNews title="News" list={_posts.slice(0, 5)} />
-        </Grid>
-
-        <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-          <AnalyticsOrderTimeline title="Order timeline" list={_timeline} />
-        </Grid>
-
-        <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-          <AnalyticsTrafficBySite title="Traffic by site" list={_traffic} />
-        </Grid>
-
-        <Grid size={{ xs: 12, md: 6, lg: 8 }}>
-          <AnalyticsTasks title="Tasks" list={_tasks} />
-        </Grid>
+            if (['mean_absolute_error', 'mean_squared_error', 'r2_score'].includes(stat)) {
+              console.log(specificStats[stat]);
+              return (
+                <Grid size={{ xs: 12, md: 6, lg: 4 }} key={index}>
+                  <AnalyticsWidgetSummary
+                    title={stat.replace(/_/g, ' ').toUpperCase()}
+                    percent={0}
+                    color={
+                      stat == 'r2_score'
+                        ? 'success'
+                        : stat == 'mean_squared_error'
+                          ? 'error'
+                          : 'warning'
+                    }
+                    total={specificStats[stat]}
+                    icon={
+                      
+                      <img
+                        alt="Weekly sales"
+                        src={stat == 'r2_score' ? f1 : stat == 'mean_squared_error' ? f2 : f3}
+                      />
+                    }
+                    chart={{
+                      categories: [],
+                      series: [],
+                    }}
+                  />
+                </Grid>
+              );
+            } else {
+              return (
+                <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+                  <AnalyticsOrderTimeline title="Prediction timeline" list={history} />
+                </Grid>
+              );
+            }
+          })}
       </Grid>
     </DashboardContent>
   );

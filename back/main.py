@@ -54,6 +54,19 @@ def predict():
 
     return jsonify({"prediction": prediction})
 
+@app.route('/getStatistics', methods=['GET'])
+def getStatistics():
+    # get the statistics from the server state
+    stats = {
+        "generic": ss.ServerState().genericStatistics,
+        "specific": ss.ServerState().specificStatistics,
+        "history": ss.ServerState().history,
+    }
+    if stats is None:
+        return jsonify({"error": "Nessuna statistica disponibile"}), 400
+
+    return jsonify(stats), 200
+
 @app.route('/reset', methods=['POST'])
 def reset():
     ss.ServerState().reset()
