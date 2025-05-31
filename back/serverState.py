@@ -117,22 +117,22 @@ class ServerState:
         if self.genericStatistics is None:
             self.genericStatistics = {
                 0: {
-                    "name": "Distribuzione della qualità del vino",
+                    "name": "Wine Quality distribution",
                     "good": self.WineQualities[self.WineQualities['quality'] >= 7].shape[0],
                     "bad":  self.WineQualities[self.WineQualities['quality'] < 7].shape[0],
                 },
                 1: {
-                    "name": "Distribuzione del colore del vino",
+                    "name": "Wine color distribution",
                     "red": self.WineQualities[self.WineQualities['color'] == 1].shape[0],
                     "white": self.WineQualities[self.WineQualities['color'] == 0].shape[0],
                 },
                 2: {
-                    "name" : "Distribuzione dei vini buoni rossi e bianchi",
+                    "name" : "Red and white wine distribution based on quality (>=7)",
                     "red": self.WineQualities[(self.WineQualities['color'] == 1) & (self.WineQualities['quality'] >= 7)].shape[0],
                     "white": self.WineQualities[(self.WineQualities['color'] == 0) & (self.WineQualities['quality'] >= 7)].shape[0],
                 },
                 3: {
-                    "name" : "Distribuzione dei vini cattivi rossi e bianchi",
+                    "name" : "Red and white wine distribution based on quality (<7)",
                     "red": self.WineQualities[(self.WineQualities['color'] == 1) & (self.WineQualities['quality'] < 7)].shape[0],
                     "white": self.WineQualities[(self.WineQualities['color'] == 0) & (self.WineQualities['quality'] < 7)].shape[0],
                 }

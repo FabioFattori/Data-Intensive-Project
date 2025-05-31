@@ -28,6 +28,7 @@ function DataInput(props: DataInputProps) {
       id="outlined-suffix-shrink"
       label={labelToShow}
       variant="outlined"
+      type="number"
       value={valueToShow}
       onChange={props.onChange}
       InputProps={{
@@ -69,6 +70,7 @@ function DataInput(props: DataInputProps) {
       variant="outlined"
       value={valueToShow}
       onChange={props.onChange}
+      type="number"
     />
   );
 }

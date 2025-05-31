@@ -9,7 +9,7 @@ interface GenericStatsComponentProps {
 
 function GenericStatsComponent(props: GenericStatsComponentProps) {
   return (
-    <Grid container spacing={3}>
+    <>
       {Object.keys(props.genericStats).map((stat : any, index) => {
         // Estrai le chiavi da visualizzare escludendo 'name'
         const dataKeys = Object.keys(props.genericStats[stat]).filter((key) => key !== 'name');
@@ -86,7 +86,7 @@ function GenericStatsComponent(props: GenericStatsComponentProps) {
         <Grid size={{ xs: 12, md: 6, lg: 8 }}>
           <AnalyticsTasks title="Tasks" list={_tasks} />
         </Grid> */}
-    </Grid>
+    </>
   );
 }
 
