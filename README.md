@@ -1,4 +1,4 @@
-## Struttura del Progetto
+# Struttura del Progetto
 - /
   - back => Directory contente tutta la parte backend del progetto (flask)
   - front => Directory contente tutta la parte frontend del progetto (react + typescript)
