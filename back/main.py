@@ -1,16 +1,12 @@
-from datetime import datetime
 import sys
 import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from flask import make_response
 import serverState as ss
 
-# Ottieni il percorso assoluto della cartella principale (AmbrogioAI)
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 UPLOAD_FOLDER = os.path.abspath(BASE_DIR+ "/backend/uploads")
 
-# Aggiungi "AmbrogioAI" al percorso dei moduli importabili
 sys.path.insert(0, BASE_DIR)
 
 app = Flask(__name__)
@@ -49,7 +45,6 @@ def predict():
     if model is None:
         return jsonify({"error": "Nessun modello selezionato"}), 400
 
-    # get the passed image from the request
     prediction = ss.ServerState().handlePrediction(data)
 
     return jsonify({"prediction": prediction})
